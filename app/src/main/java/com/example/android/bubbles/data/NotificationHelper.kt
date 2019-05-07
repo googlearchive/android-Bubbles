@@ -22,17 +22,10 @@ import android.app.PendingIntent
 import android.app.Person
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.BlendMode
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.drawable.Icon
 import android.net.Uri
-import androidx.annotation.DrawableRes
 import androidx.annotation.WorkerThread
-import androidx.core.graphics.applyCanvas
 import com.example.android.bubbles.BubbleActivity
 import com.example.android.bubbles.MainActivity
 import com.example.android.bubbles.R
@@ -71,7 +64,12 @@ class NotificationHelper(private val context: Context) {
 
     @WorkerThread
     fun showNotification(chat: Chat, fromUser: Boolean) {
-        val icon = Icon.createWithBitmap(roundIcon(context, chat.contact.icon))
+        val icon = Icon.createWithAdaptiveBitmap(
+            BitmapFactory.decodeResource(
+                context.resources,
+                chat.contact.icon
+            )
+        )
         val person = Person.Builder()
             .setName(chat.contact.name)
             .setIcon(icon)
@@ -172,24 +170,4 @@ class NotificationHelper(private val context: Context) {
         val channel = notificationManager.getNotificationChannel(CHANNEL_NEW_MESSAGES)
         return notificationManager.areBubblesAllowed() && channel.canBubble()
     }
-}
-
-@WorkerThread
-private fun roundIcon(context: Context, @DrawableRes id: Int): Bitmap {
-    val original = BitmapFactory.decodeResource(context.resources, id)
-    val width = original.width
-    val height = original.height
-    val rect = Rect(0, 0, width, height)
-    val icon = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val paint = Paint().apply {
-        isAntiAlias = true
-        color = Color.BLACK
-    }
-    icon.applyCanvas {
-        drawARGB(0, 0, 0, 0)
-        drawOval(0f, 0f, width.toFloat(), height.toFloat(), paint)
-        paint.blendMode = BlendMode.SRC_IN
-        drawBitmap(original, rect, rect, paint)
-    }
-    return icon
 }
